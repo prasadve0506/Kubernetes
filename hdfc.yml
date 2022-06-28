@@ -1,0 +1,249 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+   name: businessnext-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: businessnext-app
+  template:
+    metadata:
+      labels:
+        app: businessnext-app
+    spec:
+      tolerations:
+      - effect: NoSchedule
+        key: cattle.io/os
+        operator: Equal
+        value: windows
+      containers:
+      - name: crmnextapp
+        image: 192.168.0.120:30500/crmnext-app:10.19.8-Sql
+        env:
+        - name: APP_ASSETSFOLDER
+          value: assets_101908
+        - name: APPSETTING_CDNCSSPath
+          value: /appdemo/assets_101908/css    
+        - name: APPSETTING_CDNImagePath
+          value: /appdemo/assets_101908/img
+        - name: APPSETTING_CDNJavascript
+          value: /appdemo/assets_101908/js
+        - name: APPSETTING_RootPath
+          value: appdemo
+        - name: APPSETTING_Securedlogin
+          value: "true"
+        - name: APP_ENABLEHTTPS
+          value: "true"
+        - name: APP_NAME
+          value: appdemo
+        envFrom:
+          - secretRef:
+              name: hdfc-mobile-demo-secret
+      imagePullSecrets:
+      - name: localpvtimgpull
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: businessnext-app
+spec:
+  selector:
+    app: businessnext-app
+  type: ClusterIP
+  ports:
+    - name: https
+      port: 443
+      targetPort: 443
+      protocol: TCP
+ 
+---
+ 
+ apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: businessnext-mobile
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: businessnext-mobile
+  template:
+    metadata:
+      labels:
+        app: businessnext-mobile
+    spec:
+      tolerations:
+      - effect: NoSchedule
+        key: cattle.io/os
+        operator: Equal
+        value: windows
+      containers:
+      - name: businessnext-mobile
+        image: 192.168.0.120:30500/crmnext-app:10.19.8-Sql
+        env:
+            - name: APPSETTING_CDNCSSPath
+              value: /mobiledemo/assets_101908/css
+            - name: APPSETTING_CDNImagePath
+              value: /mobiledemo/assets_101908/img
+            - name: APPSETTING_CDNJavascript
+              value: /mobiledemo/assets_101908/js
+            - name: APPSETTING_CheckMobileDeviceForLogin
+              value: "true"
+            - name: APPSETTING_IsHybridTwo
+              value: "true"
+            - name: APPSETTING_RestApiDeploymentUrl
+              value: https://myplayhdfc.crmnextlab.com/restapihdmb/
+            - name: APPSETTING_RootPath
+              value: mobiledemo
+            - name: APPSETTING_Securedlogin
+              value: "true"
+            - name: APP_ASSETSFOLDER
+              value: assets_101908
+            - name: APP_ENABLEHTTPS
+              value: "true"
+            - name: APP_NAME
+              value: mobiledemo
+        envFrom:
+        - secretRef:
+              name: hdfc-mobile-demo-secret
+      imagePullSecrets:
+      - name: localpvtimgpull
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: businessnext-mobile
+spec:
+  selector:
+    app: businessnext-mobile
+  type: ClusterIP
+  ports:
+    - name: https
+      port: 443
+      targetPort: 443
+      protocol: TCP
+      
+      
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+   name: businessnext-scriptutility
+spec:
+  replicas: 0
+  selector:
+    matchLabels:
+      app: scriptutility
+  template:
+    metadata:
+      labels:
+        app: scriptutility
+    spec:
+      tolerations:
+      - effect: NoSchedule
+        key: cattle.io/os
+        operator: Equal
+        value: windows
+      containers:
+      - name: businessnext-scriptutility
+        image: 192.168.0.120:30500/crmnext-scriptutility:10.19.8-Sql
+        env:
+            - name: App_Version
+              value: 10.19.8
+            - name: AllowPartialCommit
+              value: 'true'
+        envFrom:
+          - secretRef:
+              name: hdfc-mobile-demo-secret
+      imagePullSecrets:
+      - name: localpvtimgpull
+      
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: hdfc-mobile-demo-secret
+data:
+  CACHE_PORT: MTEyMTE=
+  CACHE_SERVER: bWVtY2FjaGVk
+  CACHE_TYPE: bWVtY2FjaGVk
+  CONNSTR_AdminConnectionString: ImRhdGEgc291cmNlPTE5Mi4xNjguMC43MFxNU1NRTDIwMTY7aW5pdGlhbCBjYXRhbG9nPUhERkNfUExBWV9NTE5fTUJMO3Bhc3N3b3JkPWFiYzEyMztwZXJzaXN0IHNlY3VyaXR5IGluZm89VHJ1ZTt1c2VyIGlkPWNybW5leHQ7cGFja2V0IHNpemU9NDA5Njtlbmxpc3Q9ZmFsc2Ui
+  CONNSTR_ConnectionString: ImRhdGEgc291cmNlPTE5Mi4xNjguMC43MFxNU1NRTDIwMTY7aW5pdGlhbCBjYXRhbG9nPUhERkNfUExBWV9NTE5fTUJMO3Bhc3N3b3JkPWFiYzEyMztwZXJzaXN0IHNlY3VyaXR5IGluZm89VHJ1ZTt1c2VyIGlkPWNybW5leHQ7cGFja2V0IHNpemU9NDA5Njtlbmxpc3Q9ZmFsc2Ui
+  CONNSTR_DeploymentConfigConnectionString: ImRhdGEgc291cmNlPTE5Mi4xNjguMC43MFxNU1NRTDIwMTY7aW5pdGlhbCBjYXRhbG9nPUhERkNfUExBWV9NTE5fTUJMO3Bhc3N3b3JkPWFiYzEyMztwZXJzaXN0IHNlY3VyaXR5IGluZm89VHJ1ZTt1c2VyIGlkPWNybW5leHQ7cGFja2V0IHNpemU9NDA5Njtlbmxpc3Q9ZmFsc2Ui
+  DBServer: MTkyLjE2OC4wLjcwXE1TU1FMMjAxNg==
+  DbName: SERGQ19QTEFZX01MTl9NQkw=
+  DbPassword: YWJjMTIz
+  DbUserName: Y3JtbmV4dA==
+  
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+   name: memcached
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: memcached
+  template:
+    metadata:
+      labels:
+        app: memcached
+    spec:
+      tolerations:
+      - effect: NoSchedule
+        key: cattle.io/os
+        operator: Equal
+        value: linux
+      containers:
+      - name: memcached
+        image: bitnami/memcached:1.6.10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: memcached
+spec:
+  selector:
+    app: memcached
+  type: NodePort
+  ports:
+    - name: http
+      port: 11211
+      targetPort: 11211
+      protocol: TCP
+      
+---
+
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: crmnext-app
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/backend-protocol: HTTPS
+    nginx.ingress.kubernetes.io/configuration-snippet: proxy_cache_bypass $http_x_purge;
+    nginx.ingress.kubernetes.io/proxy-body-size: 100M
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+spec:
+  spec:
+  rules:
+  - host: myplayhdfc.crmnextlab.com
+    http:
+      paths:
+      - backend:
+          serviceName: businessnext-app
+          servicePort: 443
+        path: /appcrmnext
+        pathType: ImplementationSpecific
+      - backend:
+          serviceName: businessnext-mobile
+          servicePort: 443
+        path: /mobilecrmnext
+        pathType: ImplementationSpecific
+      
+        
