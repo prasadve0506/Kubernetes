@@ -5,6 +5,11 @@ metadata:
   labels:
     app: nginx
 spec:
+  tolerations:
+  - effect: NoSchedule
+    key: cattle.io/os
+    operator: Equal
+    value: linux
   replicas: 3
   selector:
     matchLabels:
